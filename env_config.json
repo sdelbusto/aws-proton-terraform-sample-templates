@@ -1,7 +1,7 @@
 {
-    "REPLACE_ME": {
-        "role": "arn:aws:iam::668204123078:role/REPLACE_ME",
+    "fargate-env": {
+        "role": "arn:aws:iam::668204123078:role/ExampleGithubRole",
         "region": "eu-west-1",
-        "state_bucket":"REPLACE_ME"
+        "state_bucket":"aws-proton-terraform-bucket-668204123078"
     }
 }
