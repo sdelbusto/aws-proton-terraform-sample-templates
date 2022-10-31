@@ -1,6 +1,6 @@
 {
-  "deploymentId" : "e605d827-ea3a-4ecd-9d8f-6d44f6167a55",
-  "isResourceDeleted" : false,
+  "deploymentId" : "<proton-resource-deleted>",
+  "isResourceDeleted" : true,
   "resourceMetadata" : {
     "arn" : "arn:aws:proton:eu-west-1:668204123078:environment/sdelbusto-terra-fargate",
     "templateArn" : "arn:aws:proton:eu-west-1:668204123078:environment-template/fargate-env",
