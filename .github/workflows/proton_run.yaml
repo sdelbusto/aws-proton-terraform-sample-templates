@@ -61,7 +61,7 @@ jobs:
             echo "setting found to true"
             found=true
             echo "setting outputs"
-            echo "::setOutput name=deployment-metadata-path::$changed_file"
+            echo "name=deployment-metadata-path::$changed_file" >>$GITHUB_OUTPUT
           fi
         done
         if [[ "$found" == false ]]; then
@@ -73,18 +73,18 @@ jobs:
       id: get-data
       run: |
         modified_resource_arn=$(jq -r '(.resourceMetadata.arn // .componentMetadata.arn)' ${{ steps.find-modified.outputs.deployment-metadata-path }})
-        echo "::setOutput name=resource_arn::$modified_resource_arn"
+        echo "name=resource_arn::$modified_resource_arn" >>$GITHUB_OUTPUT
         
         IFS=':'
         read -a split_arn <<< "$modified_resource_arn"
         proton_region=${split_arn[3]}
-        echo "::setOutput name=proton_region::$proton_region"
+        echo "name=proton_region::$proton_region" >>$GITHUB_OUTPUT
 
         deployment_id=$(jq -r '.deploymentId' ${{ steps.find-modified.outputs.deployment-metadata-path }})
-        echo "::setOutput name=deployment_id::$deployment_id"
+        echo "name=deployment_id::$deployment_id" >>$GITHUB_OUTPUT
 
         is_deleted=$(jq -r '.isResourceDeleted' ${{ steps.find-modified.outputs.deployment-metadata-path }})
-        echo "::setOutput name=is_deleted::$is_deleted"
+        echo "name=is_deleted::$is_deleted" >>$GITHUB_OUTPUT
 
 
         if [[ "$modified_resource_arn" == *":environment/"* ]]; then
