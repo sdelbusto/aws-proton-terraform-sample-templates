@@ -1,0 +1,7 @@
+{
+    "REPLACE_ME": {
+        "role": "arn:aws:iam::668204123078:role/REPLACE_ME",
+        "region": "eu-west-1",
+        "state_bucket":"REPLACE_ME"
+    }
+}

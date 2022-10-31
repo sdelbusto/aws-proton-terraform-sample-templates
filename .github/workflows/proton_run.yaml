@@ -21,10 +21,6 @@ jobs:
     name: Get Deployment Data
     runs-on: ubuntu-latest
     
-    strategy:
-      matrix:
-        node-version: [10.x, 12.x, 14.x, 15.x, 16.x]
-    
     outputs:
       role_arn: ${{ steps.get-data.outputs.role_arn }}
       environment: ${{ steps.get-data.outputs.environment }}
@@ -46,14 +42,14 @@ jobs:
     # Checkout the repository to the GitHub Actions runner
     - name: Checkout
       uses: actions/checkout@v3
-    - name: Use Node.js ${{ matrix.node-version }}
-      uses: actions/setup-node@v3
-      with:
-        node-version: ${{ matrix.node-version }}
-    - run: npm ci
-    - run: npm run build --if-present
-    - run: npm test
-    
+
+    - name: Verify env_config updated
+      run: |
+        if grep -q REPLACE_ME env_config.json; then
+          echo "You must update env_config.json or update this workflow to not require it."
+          exit 1
+        fi
+      
     - name: Get changed files
       id: files
       uses: jitterbit/get-changed-files@v1
@@ -72,7 +68,7 @@ jobs:
             echo "setting found to true"
             found=true
             echo "setting outputs"
-            echo "name=deployment-metadata-path::$changed_file">>$GITHUB_OUTPUT
+            echo "::set-output name=deployment-metadata-path::$changed_file"
           fi
         done
         if [[ "$found" == false ]]; then
@@ -84,18 +80,18 @@ jobs:
       id: get-data
       run: |
         modified_resource_arn=$(jq -r '(.resourceMetadata.arn // .componentMetadata.arn)' ${{ steps.find-modified.outputs.deployment-metadata-path }})
-        echo "name=resource_arn::$modified_resource_arn">>$GITHUB_OUTPUT
+        echo "::set-output name=resource_arn::$modified_resource_arn"
         
         IFS=':'
         read -a split_arn <<< "$modified_resource_arn"
         proton_region=${split_arn[3]}
-        echo "name=proton_region::$proton_region">>$GITHUB_OUTPUT
+        echo "::set-output name=proton_region::$proton_region"
 
         deployment_id=$(jq -r '.deploymentId' ${{ steps.find-modified.outputs.deployment-metadata-path }})
-        echo "name=deployment_id::$deployment_id">>$GITHUB_OUTPUT
+        echo "::set-output name=deployment_id::$deployment_id"
 
         is_deleted=$(jq -r '.isResourceDeleted' ${{ steps.find-modified.outputs.deployment-metadata-path }})
-        echo "name=is_deleted::$is_deleted">>$GITHUB_OUTPUT
+        echo "::set-output name=is_deleted::$is_deleted"
 
 
         if [[ "$modified_resource_arn" == *":environment/"* ]]; then
@@ -132,13 +128,28 @@ jobs:
           component_name=${split_resources[1]}
           working_directory=$environment_name/$component_name/  
         fi
+
+        if [[ $(jq -r --arg env $environment_name 'has($env)' env_config.json) = "true" ]]; then
+          role_arn=$(jq -r --arg env $environment_name '.[$env]["role"]' env_config.json)
+          target_region=$(jq -r --arg env $environment_name '.[$env]["region"]' env_config.json)
+          state_bucket=$(jq -r --arg env $environment_name '.[$env]["state_bucket"]' env_config.json)   
+        else     
+          if [[ $(jq -r --arg env $environment_name 'has("*")' env_config.json) = "true" ]]; then
+            role_arn=$(jq -r --arg env $environment_name '.["*"]["role"]' env_config.json)
+            target_region=$(jq -r --arg env $environment_name '.["*"]["region"]' env_config.json)
+            state_bucket=$(jq -r --arg env $environment_name '.["*"]["state_bucket"]' env_config.json)
+          else
+            echo "Missing $environment_name or * from env_config.json, exiting"
+            exit 1
+          fi
+        fi
         
-        echo "::setOutput name=working_directory::$working_directory"
-        echo "::setOutput name=environment::$environment_name"
+        echo "::set-output name=working_directory::$working_directory"
+        echo "::set-output name=environment::$environment_name"
         
-        echo "::setOutput name=role_arn::$role_arn"
-        echo "::setOutput name=target_region::$target_region"
-        echo "::setOutput name=state_bucket::$state_bucket"
+        echo "::set-output name=role_arn::$role_arn"
+        echo "::set-output name=target_region::$target_region"
+        echo "::set-output name=state_bucket::$state_bucket"
 
   terraform:
     name: 'Terraform'
@@ -209,7 +220,7 @@ jobs:
     # If this completes, then the entire workflow has successfully completed
     - name: Mark Success
       id: mark_success
-      run: echo "::setOutput name=success::True"
+      run: echo "::set-output name=success::True"
 
   notify-proton:
     name: 'Notify Proton'
