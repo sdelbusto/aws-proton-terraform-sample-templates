@@ -1,6 +1,6 @@
 {
-  "deploymentId" : "c315c282-cadb-4362-b92b-89fe2288e67f",
-  "isResourceDeleted" : false,
+  "deploymentId" : "<proton-resource-deleted>",
+  "isResourceDeleted" : true,
   "resourceMetadata" : {
     "arn" : "arn:aws:proton:eu-west-1:668204123078:environment/sdelbust-test-ec2-2",
     "templateArn" : "arn:aws:proton:eu-west-1:668204123078:environment-template/ecs-ec2-env",
