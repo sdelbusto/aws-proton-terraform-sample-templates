@@ -21,6 +21,10 @@ jobs:
     name: Get Deployment Data
     runs-on: ubuntu-latest
     
+    strategy:
+      matrix:
+        node-version: [10.x, 12.x, 14.x, 16.x, 18.x]
+    
     outputs:
       role_arn: ${{ steps.get-data.outputs.role_arn }}
       environment: ${{ steps.get-data.outputs.environment }}
