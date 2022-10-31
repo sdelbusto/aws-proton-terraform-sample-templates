@@ -21,10 +21,6 @@ jobs:
     name: Get Deployment Data
     runs-on: ubuntu-latest
     
-    strategy:
-      matrix:
-        node-version: [10.x, 12.x, 14.x, 16.x, 18.x]
-    
     outputs:
       role_arn: ${{ steps.get-data.outputs.role_arn }}
       environment: ${{ steps.get-data.outputs.environment }}
@@ -50,8 +46,6 @@ jobs:
     - name: Get changed files
       id: files
       uses: jitterbit/get-changed-files@v1
-      with:
-        node-version: ${{ matrix.node-version }}
       
     - name: Find modified resource
       id: find-modified
@@ -67,7 +61,7 @@ jobs:
             echo "setting found to true"
             found=true
             echo "setting outputs"
-            echo "name=deployment-metadata-path::$changed_file" >>$GITHUB_OUTPUT
+            echo "name=deployment-metadata-path::$changed_file">>$GITHUB_OUTPUT
           fi
         done
         if [[ "$found" == false ]]; then
@@ -79,18 +73,18 @@ jobs:
       id: get-data
       run: |
         modified_resource_arn=$(jq -r '(.resourceMetadata.arn // .componentMetadata.arn)' ${{ steps.find-modified.outputs.deployment-metadata-path }})
-        echo "name=resource_arn::$modified_resource_arn" >>$GITHUB_OUTPUT
+        echo "name=resource_arn::$modified_resource_arn">>$GITHUB_OUTPUT
         
         IFS=':'
         read -a split_arn <<< "$modified_resource_arn"
         proton_region=${split_arn[3]}
-        echo "name=proton_region::$proton_region" >>$GITHUB_OUTPUT
+        echo "name=proton_region::$proton_region">>$GITHUB_OUTPUT
 
         deployment_id=$(jq -r '.deploymentId' ${{ steps.find-modified.outputs.deployment-metadata-path }})
-        echo "name=deployment_id::$deployment_id" >>$GITHUB_OUTPUT
+        echo "name=deployment_id::$deployment_id">>$GITHUB_OUTPUT
 
         is_deleted=$(jq -r '.isResourceDeleted' ${{ steps.find-modified.outputs.deployment-metadata-path }})
-        echo "name=is_deleted::$is_deleted" >>$GITHUB_OUTPUT
+        echo "name=is_deleted::$is_deleted">>$GITHUB_OUTPUT
 
 
         if [[ "$modified_resource_arn" == *":environment/"* ]]; then
